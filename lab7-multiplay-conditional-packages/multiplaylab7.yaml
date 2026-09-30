@@ -1,0 +1,64 @@
+---
+# Play 1: create the file to be served, on the control host
+- name: Control host
+  hosts: localhost
+  tasks:
+    - name: create file
+      copy:
+        content: "welcome to my webserver"
+        dest: /tmp/index.html
+
+# Play 2: conditional package install, scoped to ansible2 only per requirement
+- name: Install web server packages
+  hosts: ansible2
+  vars_files:
+    - packages.yaml
+  tasks:
+    - name: Install packages
+      yum:
+        name: "{{ item.value }}"
+        state: installed
+        disable_gpg_check: true
+      loop: "{{ packages | dict2items }}"
+      when: >
+        (ansible_facts.distribution == "CentOS" or ansible_facts.distribution == "RedHat")
+        and ansible_facts.distribution_version is version('8.0', '>=')
+
+    - name: Fail if requirements not met
+      fail:
+        msg: "Host '{{ ansible_facts.hostname }}' does not meet minimal requirements"
+      when: >
+        not (
+          (ansible_facts.distribution == "CentOS" or ansible_facts.distribution == "RedHat")
+          and ansible_facts.distribution_version is version('8.0', '>=')
+        )
+
+# Play 3: deploy the page, restart the service, open the firewall
+- name: Deploy and configure web server
+  hosts: ansible2
+  tasks:
+    - name: Successful copy
+      block:
+        - name: copy index
+          copy:
+            src: /tmp/index.html
+            dest: /var/www/html/
+        - name: restart webserver
+          service:
+            name: httpd
+            state: restarted
+            enabled: yes
+      rescue:
+        - name: Error if fail
+          debug:
+            msg: "The copying failed"
+      always:
+        - name: Open http and https
+          ansible.posix.firewalld:
+            service: "{{ item }}"
+            permanent: true
+            state: enabled
+            immediate: yes
+          loop:
+            - http
+            - https

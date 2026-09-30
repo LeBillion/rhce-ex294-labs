@@ -1,0 +1,3 @@
+packages:
+  web_pack: httpd
+  ssl_pack: mod_ssl
