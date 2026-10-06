@@ -1,0 +1,12 @@
+---
+- name: Gather facts on all hosts
+  hosts: all
+  gather_facts: yes
+
+- name: Generate /etc/hosts on all hosts
+  hosts: all
+  tasks:
+    - name: Deploy hosts file from template
+      template:
+        src: hosts.j2
+        dest: /etc/hosts

@@ -1,0 +1,63 @@
+---
+- name: Install and enable vsftpd service
+  hosts: web
+  tasks:
+    - name: Install vsftpd package
+      dnf:
+        name: vsftpd
+        state: present
+
+    - name: Open firewall port for FTP
+      firewalld:
+        service: ftp
+        permanent: yes
+        immediate: yes
+        state: enabled
+
+    - name: Start and enable vsftpd
+      service:
+        name: vsftpd
+        state: started
+        enabled: yes
+
+- name: Configure vsftpd service
+  hosts: web
+  vars:
+    anonymous_enable: "YES"
+    local_enable: "YES"
+    write_enable: "YES"
+    anon_upload_enable: "YES"
+  tasks:
+    - name: Ensure /var/ftp/pub exists
+      file:
+        path: /var/ftp/pub
+        state: directory
+        mode: '0777'
+
+    - name: Deploy vsftpd configuration from template
+      template:
+        src: vsftpd.conf.j2
+        dest: /etc/vsftpd/vsftpd.conf
+      notify: restart vsftpd
+
+    - name: Allow anonymous FTP writes (SELinux boolean)
+      seboolean:
+        name: ftpd_anon_write
+        state: yes
+        persistent: yes
+
+    - name: Set SELinux context for /var/ftp/pub
+      sefcontext:
+        target: '/var/ftp/pub(/.*)?'
+        setype: public_content_rw_t
+        state: present
+      notify: restore selinux context
+
+  handlers:
+    - name: restart vsftpd
+      service:
+        name: vsftpd
+        state: restarted
+
+    - name: restore selinux context
+      command: restorecon -Rv /var/ftp/pub

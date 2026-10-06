@@ -1,0 +1,20 @@
+# Example config file /etc/vsftpd/vsftpd.conf
+#
+# Base file taken from a fresh vsftpd install (dnf install vsftpd);
+# only the 4 lines below were templatized per the lab requirement.
+# Everything else is left byte-for-byte as the package default.
+
+anonymous_enable={{ anonymous_enable }}
+local_enable={{ local_enable }}
+write_enable={{ write_enable }}
+anon_upload_enable={{ anon_upload_enable }}
+
+dirmessage_enable=YES
+use_localtime=YES
+xferlog_enable=YES
+connect_from_port_20=YES
+xferlog_std_format=YES
+listen=NO
+listen_ipv6=YES
+pam_service_name=vsftpd
+userlist_enable=YES
