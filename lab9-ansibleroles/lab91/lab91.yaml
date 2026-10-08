@@ -1,0 +1,19 @@
+---
+- name: Start Nginx on ansible1, pinned via Galaxy requirements file
+  hosts: ansible1
+  become: yes
+  pre_tasks:
+    - name: Ensure conflicting packages are absent
+      ansible.builtin.dnf:
+        name:
+          - httpd
+          - mariadb-server
+        state: absent
+
+  roles:
+    - geerlingguy.nginx
+    - geerlingguy.postgresql
+
+  # Ansible's fixed execution order is pre_tasks -> roles -> tasks ->
+  # post_tasks -> handlers, regardless of the visual order roles/tasks
+  # appear in within the file.

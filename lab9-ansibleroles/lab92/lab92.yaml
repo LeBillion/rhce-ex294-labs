@@ -1,0 +1,25 @@
+---
+- name: Manage SELinux with RHEL System Role
+  hosts: ansible1
+  become: yes
+  vars:
+    selinux_state: enforcing
+
+    selinux_booleans:
+      - { name: 'auto_relabel_on_cron', state: 'yes' }   # verify via getsebool -a | grep relabel
+
+    selinux_fcontexts:
+      - { target: '/var/ftp/uploads(/.*)?', setype: 'public_content_rw_t' }
+
+    selinux_ports:
+      - { ports: '82', proto: 'tcp', setype: 'http_port_t' }
+
+  pre_tasks:
+    - name: Ensure /var/ftp/uploads exists with correct permissions
+      ansible.builtin.file:
+        path: /var/ftp/uploads
+        state: directory
+        mode: '0777'
+
+  roles:
+    - rhel-system-roles.selinux

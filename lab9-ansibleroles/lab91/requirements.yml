@@ -1,0 +1,19 @@
+---
+# Manifest only — no hosts/tasks. Install with:
+#   ansible-galaxy install -r requirements.yml
+# Run BEFORE the playbook, not as part of it.
+
+roles:
+  - name: geerlingguy.nginx
+    # "Version before the latest" per lab requirement — confirmed via
+    # ansible-galaxy role info geerlingguy.nginx (second-newest listed).
+    version: "2.6.9"
+
+  - name: geerlingguy.postgresql
+    # No version pinned — lab requires latest.
+
+collections:
+  # geerlingguy.postgresql's tasks call postgresql_user, which isn't
+  # bundled with the role — surfaces only as a runtime "couldn't resolve
+  # module/action" error, not at install time. Required separately:
+  - name: community.postgresql
